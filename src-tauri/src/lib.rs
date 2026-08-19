@@ -5,7 +5,6 @@ mod utils;
 use tauri::{
     menu::{Menu, MenuItem},
     tray::TrayIconBuilder,
-    Manager,
 };
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
