@@ -11,7 +11,8 @@ Inspired by the Formix browser extension, but works system-wide — not just on 
 - 📝 **Templates with fields** — create presets like `Hello, {{Name}}, how are you?`
 - 🔁 **Field reuse** — the same field can appear multiple times in a template
 - 🔍 **Quick search** — instant filtering of the preset list
-- 📋 **One-click paste** — text is copied to the clipboard and automatically pasted into the active application (`Ctrl+V`)
+- 📋 **One-click paste** — text is copied to the clipboard and automatically pasted into the active application (`Ctrl+V`), works correctly regardless of the active keyboard layout
+- 👋 **Click-outside to close** — the window hides itself when you click outside it, like Spotlight/Raycast
 - 🎨 **Minimalist interface** — a compact window without clutter, so it doesn't distract you from work
 - 🖥 **System tray** — the app runs in the background without taking up space on the taskbar
 
@@ -32,7 +33,7 @@ Inspired by the Formix browser extension, but works system-wide — not just on 
 - On Windows — [Microsoft C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) with the **Desktop development with C++** component
 - On Linux — WebKitGTK system dependencies ([see the Tauri guide](https://tauri.app/start/prerequisites/))
 
-### Steps
+### Development
 
 ```bash
 # Clone the repository
@@ -56,18 +57,22 @@ npm run tauri build
 
 The ready installer will appear in `src-tauri/target/release/bundle`.
 
+### Ready-made build
+
+If you don't want to build it yourself — the latest `.exe` is available on the [Releases](../../releases) page.
+
+> **Note:** the build is not signed with a certificate, so Windows SmartScreen may show a warning on first launch. This is expected for independent projects — click "More info" → "Run anyway".
+
 ## ⚠️ Known Limitations
 
-- Paste simulation (`Ctrl+V`) works correctly only with the **English keyboard layout**. With other layouts, errors are possible — a fix is in development.
 - The hotkey is currently hardcoded (`Ctrl+F2`); configuration through the interface will be added in upcoming updates.
 
 ## 🗺 Roadmap
 
-- [ ] Fix paste simulation for non-English keyboard layouts
-- [ ] Configurable hotkey through the interface
+- [ ] Settings menu (including hotkey change through the interface)
 - [ ] Launch at system startup
-- [ ] Hide window when clicking outside
 - [ ] Export/import presets
+- [ ] Quick text abbreviations (e.g., `!hi` → ready-made text)
 
 ## 📄 License
 
