@@ -32,6 +32,6 @@
   "bundle": {
     "active": true,
     "targets": "all",
-    "icon": ["icons/Logo512x512.png"]
+    "icon": ["icons/icon.ico"]
   }
 }
