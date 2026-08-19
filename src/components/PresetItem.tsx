@@ -4,7 +4,6 @@ import { motion } from "motion/react";
 
 interface PresetItemProps {
   preset: Preset;
-  selected: boolean;
   onSelect: (preset: Preset) => void;
   onEdit: (preset: Preset) => void;
   onDelete: (preset: Preset) => void;
@@ -12,7 +11,6 @@ interface PresetItemProps {
 
 export default function PresetItem({
   preset,
-  selected,
   onSelect,
   onEdit,
   onDelete,
@@ -23,10 +21,7 @@ export default function PresetItem({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.15 }}
-      className={[
-        "flex items-center rounded-lg transition-colors",
-        selected ? "bg-black/[0.07]" : "hover:bg-black/[0.04]",
-      ].join(" ")}
+      className="flex items-center rounded-lg transition-colors hover:bg-black/[0.04]"
     >
       <div
         role="button"

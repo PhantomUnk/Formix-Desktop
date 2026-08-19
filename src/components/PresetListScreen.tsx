@@ -17,7 +17,6 @@ export default function PresetListScreen() {
   const [presets, setPresets] = useState<Preset[]>([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingPreset, setEditingPreset] = useState<Preset | null>(null);
   const [activePreset, setActivePreset] = useState<Preset | null>(null);
@@ -32,12 +31,6 @@ export default function PresetListScreen() {
     reload().finally(() => setLoading(false));
   }, [reload]);
 
-  useEffect(() => {
-    const handler = () => setActivePreset(null);
-    window.addEventListener("app:reset", handler);
-    return () => window.removeEventListener("app:reset", handler);
-  }, []);
-
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return presets;
@@ -49,7 +42,6 @@ export default function PresetListScreen() {
   }, [presets, query]);
 
   const handleSelect = (preset: Preset) => {
-    setSelectedId(preset.id);
     setActivePreset(preset);
   };
 
@@ -83,7 +75,6 @@ export default function PresetListScreen() {
 
   const handleDelete = async (preset: Preset) => {
     await deletePreset(preset.id);
-    if (selectedId === preset.id) setSelectedId(null);
     await reload();
   };
 
@@ -124,7 +115,6 @@ export default function PresetListScreen() {
                       <PresetItem
                         key={preset.id}
                         preset={preset}
-                        selected={selectedId === preset.id}
                         onSelect={handleSelect}
                         onEdit={openEditModal}
                         onDelete={handleDelete}

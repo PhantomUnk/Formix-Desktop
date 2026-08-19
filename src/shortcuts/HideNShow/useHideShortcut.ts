@@ -26,7 +26,6 @@ async function hideWindow() {
     const appWindow = getCurrentWindow();
     await fadeOut(document.getElementById("root"));
     await appWindow.hide();
-    window.dispatchEvent(new CustomEvent("app:reset"));
   } finally {
     isHiding = false;
   }

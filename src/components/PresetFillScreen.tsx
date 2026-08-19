@@ -76,7 +76,7 @@ export default function PresetFillScreen({
     onSubmit(finalText);
     await writeText(finalText);
     await appWindow.hide();
-    window.dispatchEvent(new CustomEvent("app:reset"));
+    onBack();
     await new Promise((resolve) => setTimeout(resolve, 150));
     await invoke("simulate_paste");
     resetValues();
