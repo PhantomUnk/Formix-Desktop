@@ -19,13 +19,11 @@ pub fn run() {
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
-            // пункт меню "Выход"
-            let quit_item = MenuItem::with_id(app, "quit", "Выход", true, None::<&str>)?;
+            let quit_item = MenuItem::with_id(app, "Quit", "Выход", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&quit_item])?;
 
-            // сам иконка в трее
             TrayIconBuilder::new()
-                .icon(app.default_window_icon().unwrap().clone()) // используем иконку приложения по умолчанию
+                .icon(app.default_window_icon().unwrap().clone())
                 .menu(&menu)
                 .on_menu_event(|app, event| {
                     if event.id.as_ref() == "quit" {

@@ -21,10 +21,7 @@ export default function PresetFormModal({
   const [saving, setSaving] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const placeholders = useMemo(
-    () => extractPlaceholders(template),
-    [template],
-  );
+  const placeholders = useMemo(() => extractPlaceholders(template), [template]);
 
   useEffect(() => {
     if (open) {
@@ -50,18 +47,18 @@ export default function PresetFormModal({
     });
   };
 
-  const handleAddField = () => {
-    const existing = extractPlaceholders(template);
+  const handleAddTextField = () => {
+    // + Text Field button click handler
     let maxNumber = 0;
 
-    for (const name of existing) {
-      const match = name.match(/^Поле (\d+)$/);
+    for (const name of placeholders) {
+      const match = name.match(/^Text Field (\d+)$/);
       if (match) {
         maxNumber = Math.max(maxNumber, Number(match[1]));
       }
     }
 
-    insertAtCursor(`Поле ${maxNumber + 1}`);
+    insertAtCursor(`Text Field ${maxNumber + 1}`);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -124,10 +121,10 @@ export default function PresetFormModal({
                 <div className="mt-1 flex flex-wrap items-center gap-1.5 rounded-t-md border-b border-black/[0.06] bg-black/[0.03] px-2 py-1.5">
                   <button
                     type="button"
-                    onClick={handleAddField}
+                    onClick={handleAddTextField}
                     className="rounded-md bg-black/[0.06] px-2 py-0.5 text-xs font-medium text-neutral-700 transition-colors hover:bg-black/[0.1]"
                   >
-                    + Текстовое поле
+                    + Text Field
                   </button>
                   {placeholders.map((name) => (
                     <button

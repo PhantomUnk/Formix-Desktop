@@ -1,70 +1,36 @@
 import type { Preset } from "@/lib/db";
-import { extractPlaceholders, fillTemplate } from "@/lib/template";
-import { invoke } from "@tauri-apps/api/core";
-import { getCurrentWindow } from "@tauri-apps/api/window";
-import { writeText } from "@tauri-apps/plugin-clipboard-manager";
+import { pasteIntoFocusedApp } from "@/lib/paste";
+import { extractPlaceholders, fillTemplate, parseTemplateSegments } from "@/lib/template";
 import { ArrowLeft } from "lucide-react";
 import { motion } from "motion/react";
 import { useMemo, useState } from "react";
 
-const appWindow = getCurrentWindow();
-
-type TemplateSegment =
-  | { type: "text"; value: string }
-  | { type: "placeholder"; name: string };
-
-function parseTemplateSegments(template: string): TemplateSegment[] {
-  const segments: TemplateSegment[] = [];
-  const regex = /\{\{([^{}]+)\}\}/g; // было: /\{\{(\w+)\}\}/g
-  let lastIndex = 0;
-  let match: RegExpExecArray | null;
-
-  while ((match = regex.exec(template)) !== null) {
-    if (match.index > lastIndex) {
-      segments.push({
-        type: "text",
-        value: template.slice(lastIndex, match.index),
-      });
-    }
-    segments.push({ type: "placeholder", name: match[1].trim() }); // добавлен .trim()
-    lastIndex = regex.lastIndex;
-  }
-
-  if (lastIndex < template.length) {
-    segments.push({ type: "text", value: template.slice(lastIndex) });
-  }
-
-  return segments;
-}
-
 interface PresetFillScreenProps {
   preset: Preset;
   onBack: () => void;
-  onSubmit: (text: string) => void;
 }
 
 export default function PresetFillScreen({
   preset,
   onBack,
-  onSubmit,
 }: PresetFillScreenProps) {
   const placeholders = useMemo(
     () => extractPlaceholders(preset.template),
     [preset.template],
-  );
+  ); // "Hello {{name}} {{surname}}!" → ["name", "surname"]
 
   const [values, setValues] = useState<Record<string, string>>(() =>
     Object.fromEntries(placeholders.map((name) => [name, ""])),
-  );
+  ); // "Hello {{name}} {{surname}}!" → { name: "", surname: "" }
 
   const segments = useMemo(
     () => parseTemplateSegments(preset.template),
     [preset.template],
-  );
+  ); // "Hello {{name}} {{surname}}!" → [{ type: "text", value: "Hello " }, { type: "placeholder", name: "name" }, { type: "text", value: " " }, { type: "placeholder", name: "surname" }, { type: "text", value: "!" }]
 
   const handleChange = (name: string, value: string) => {
     setValues((prev) => ({ ...prev, [name]: value }));
-  };
+  }; // 
 
   const resetValues = () => {
     setValues(Object.fromEntries(placeholders.map((name) => [name, ""])));
@@ -73,14 +39,11 @@ export default function PresetFillScreen({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const finalText = fillTemplate(preset.template, values);
-    onSubmit(finalText);
-    await writeText(finalText);
-    await appWindow.hide();
-    onBack();
-    await new Promise((resolve) => setTimeout(resolve, 150));
-    await invoke("simulate_paste");
+    await pasteIntoFocusedApp(finalText, onBack);
     resetValues();
   };
+
+  const firstPlaceholderIndex = segments.findIndex((s) => s.type === "placeholder");
 
   return (
     <motion.div
@@ -127,10 +90,7 @@ export default function PresetFillScreen({
                       segment.name.length,
                       (values[segment.name] ?? "").length || 1,
                     )}
-                    autoFocus={
-                      index ===
-                      segments.findIndex((s) => s.type === "placeholder")
-                    }
+                    autoFocus={index === firstPlaceholderIndex}
                     className="inline-block min-w-[2ch] select-text border-0 border-b border-neutral-400/60 bg-black/[0.06] px-1 py-0 text-sm text-neutral-900 outline-none ring-0 placeholder:text-neutral-400/70 focus:border-neutral-600 focus:bg-black/[0.08]"
                   />
                 ),

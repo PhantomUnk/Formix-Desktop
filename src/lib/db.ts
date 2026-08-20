@@ -1,4 +1,3 @@
-// src/lib/db.ts
 import Database from "@tauri-apps/plugin-sql";
 
 let dbInstance: Database | null = null;
@@ -22,19 +21,26 @@ export async function getAllPresets(): Promise<Preset[]> {
   return db.select("SELECT * FROM presets ORDER BY created_at DESC");
 }
 
-export async function createPreset(title: string, template: string): Promise<void> {
+export async function createPreset(
+  title: string,
+  template: string,
+): Promise<void> {
   const db = await getDb();
-  await db.execute(
-    "INSERT INTO presets (title, template) VALUES ($1, $2)",
-    [title, template]
-  );
+  await db.execute("INSERT INTO presets (title, template) VALUES ($1, $2)", [
+    title,
+    template,
+  ]);
 }
 
-export async function updatePreset(id: number, title: string, template: string): Promise<void> {
+export async function updatePreset(
+  id: number,
+  title: string,
+  template: string,
+): Promise<void> {
   const db = await getDb();
   await db.execute(
     "UPDATE presets SET title = $1, template = $2 WHERE id = $3",
-    [title, template, id]
+    [title, template, id],
   );
 }
 

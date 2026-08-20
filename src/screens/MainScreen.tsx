@@ -1,3 +1,7 @@
+import AddPresetButton from "@/components/AddPresetButton";
+import PresetFormModal from "@/components/PresetFormModal";
+import PresetItem from "@/components/PresetItem";
+import PresetSearch from "@/components/PresetSearch";
 import {
   createPreset,
   deletePreset,
@@ -5,15 +9,11 @@ import {
   updatePreset,
   type Preset,
 } from "@/lib/db";
+import PresetFillScreen from "@/screens/PresetFillScreen";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import PresetFormModal from "./PresetFormModal";
-import AddPresetButton from "./AddPresetButton";
-import PresetFillScreen from "./PresetFillScreen";
-import PresetItem from "./PresetItem";
-import PresetSearch from "./PresetSearch";
 
-export default function PresetListScreen() {
+export default function MainScreen() {
   const [presets, setPresets] = useState<Preset[]>([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -40,14 +40,6 @@ export default function PresetListScreen() {
         p.template.toLowerCase().includes(q),
     );
   }, [presets, query]);
-
-  const handleSelect = (preset: Preset) => {
-    setActivePreset(preset);
-  };
-
-  const handleFillSubmit = (text: string) => {
-    console.log("final text:", text);
-  };
 
   const openCreateModal = () => {
     setEditingPreset(null);
@@ -86,7 +78,6 @@ export default function PresetListScreen() {
             key={activePreset.id}
             preset={activePreset}
             onBack={() => setActivePreset(null)}
-            onSubmit={handleFillSubmit}
           />
         ) : (
           <motion.div
@@ -115,7 +106,7 @@ export default function PresetListScreen() {
                       <PresetItem
                         key={preset.id}
                         preset={preset}
-                        onSelect={handleSelect}
+                        onSelect={setActivePreset}
                         onEdit={openEditModal}
                         onDelete={handleDelete}
                       />

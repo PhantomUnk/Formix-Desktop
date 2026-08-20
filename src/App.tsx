@@ -1,11 +1,11 @@
+import useHideShortcut from "@/hooks/useHideShortcut";
+import MainScreen from "@/screens/MainScreen";
 import "./App.css";
-import PresetListScreen from "@/components/PresetListScreen";
-import useHideShortcut from "@/shortcuts/HideNShow/useHideShortcut";
 
 function App() {
   useHideShortcut();
 
-  return <PresetListScreen />;
+  return <MainScreen />;
 }
 
 export default App;
