@@ -36,10 +36,14 @@ async function hideWindow() {
 async function showWindow() {
   markShowGracePeriod();
   const appWindow = getCurrentWindow();
-  const [x, y] = await invoke<[number, number]>("get_mouse_position");
-  await appWindow.setPosition(
-    new PhysicalPosition(x - WINDOW_X_OFFSET, y - WINDOW_Y_OFFSET),
-  );
+  const size = await appWindow.innerSize(); // физический размер окна
+  const scale = await appWindow.scaleFactor();
+
+  const [x, y] = await invoke<[number, number]>("get_window_position", {
+    winWidth: size.width / scale, // convert physical size to logical size
+    winHeight: size.height / scale,
+  });
+  await appWindow.setPosition(new PhysicalPosition(x, y));
   await appWindow.show();
   await appWindow.setFocus();
   fadeIn(document.getElementById("root"));

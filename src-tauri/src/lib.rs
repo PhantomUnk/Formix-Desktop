@@ -35,7 +35,7 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            utils::get_mouse_position,
+            utils::get_window_position,
             utils::simulate_paste
         ])
         .run(tauri::generate_context!())
