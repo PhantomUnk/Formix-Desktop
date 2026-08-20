@@ -13,9 +13,10 @@ body {
 }
 
 #root {
+  --app-bg: linear-gradient(160deg, #eef1f8 0%, #dde3f0 45%, #d0d8ea 100%);
   display: flex;
   flex-direction: column;
-  background: linear-gradient(160deg, #eef1f8 0%, #dde3f0 45%, #d0d8ea 100%);
+  background: var(--app-bg);
   border-radius: 16px;
   width: 100vw;
   height: 100vh;

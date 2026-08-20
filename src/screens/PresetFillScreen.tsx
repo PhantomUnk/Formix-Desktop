@@ -17,20 +17,20 @@ export default function PresetFillScreen({
   const placeholders = useMemo(
     () => extractPlaceholders(preset.template),
     [preset.template],
-  ); // "Hello {{name}} {{surname}}!" → ["name", "surname"]
+  );
 
   const [values, setValues] = useState<Record<string, string>>(() =>
     Object.fromEntries(placeholders.map((name) => [name, ""])),
-  ); // "Hello {{name}} {{surname}}!" → { name: "", surname: "" }
+  );
 
   const segments = useMemo(
     () => parseTemplateSegments(preset.template),
     [preset.template],
-  ); // "Hello {{name}} {{surname}}!" → [{ type: "text", value: "Hello " }, { type: "placeholder", name: "name" }, { type: "text", value: " " }, { type: "placeholder", name: "surname" }, { type: "text", value: "!" }]
+  );
 
   const handleChange = (name: string, value: string) => {
     setValues((prev) => ({ ...prev, [name]: value }));
-  }; // 
+  }; 
 
   const resetValues = () => {
     setValues(Object.fromEntries(placeholders.map((name) => [name, ""])));

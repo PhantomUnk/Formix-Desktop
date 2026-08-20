@@ -1,12 +1,20 @@
 import AddPresetButton from "@/components/AddPresetButton";
+import DeleteFolderDialog from "@/components/DeleteFolderDialog";
+import FolderFormModal from "@/components/FolderFormModal";
+import FolderSection from "@/components/FolderSection";
 import PresetFormModal from "@/components/PresetFormModal";
 import PresetItem from "@/components/PresetItem";
 import PresetSearch from "@/components/PresetSearch";
 import {
+  assignPresetsToFolder,
+  createFolder,
   createPreset,
+  deleteFolder,
   deletePreset,
+  getAllFolders,
   getAllPresets,
   updatePreset,
+  type Folder,
   type Preset,
 } from "@/lib/db";
 import PresetFillScreen from "@/screens/PresetFillScreen";
@@ -15,16 +23,23 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 export default function MainScreen() {
   const [presets, setPresets] = useState<Preset[]>([]);
+  const [folders, setFolders] = useState<Folder[]>([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [presetModalOpen, setPresetModalOpen] = useState(false);
+  const [folderModalOpen, setFolderModalOpen] = useState(false);
   const [editingPreset, setEditingPreset] = useState<Preset | null>(null);
+  const [folderToDelete, setFolderToDelete] = useState<Folder | null>(null);
+  const [collapsedIds, setCollapsedIds] = useState<number[]>([]);
   const [activePreset, setActivePreset] = useState<Preset | null>(null);
 
   const reload = useCallback(async () => {
-    const next = await getAllPresets();
-    setPresets(next);
-    return next;
+    const [nextPresets, nextFolders] = await Promise.all([
+      getAllPresets(),
+      getAllFolders(),
+    ]);
+    setPresets(nextPresets);
+    setFolders(nextFolders);
   }, []);
 
   useEffect(() => {
@@ -41,33 +56,104 @@ export default function MainScreen() {
     );
   }, [presets, query]);
 
+  const isSearching = query.trim().length > 0;
+
   const openCreateModal = () => {
     setEditingPreset(null);
-    setModalOpen(true);
+    setPresetModalOpen(true);
   };
 
   const openEditModal = (preset: Preset) => {
     setEditingPreset(preset);
-    setModalOpen(true);
+    setPresetModalOpen(true);
   };
 
-  const closeModal = () => {
-    setModalOpen(false);
+  const closePresetModal = () => {
+    setPresetModalOpen(false);
     setEditingPreset(null);
   };
 
-  const handleSave = async (title: string, template: string) => {
+  const handleSavePreset = async (
+    title: string,
+    template: string,
+    folderId: number | null,
+  ) => {
     if (editingPreset) {
-      await updatePreset(editingPreset.id, title, template);
+      await updatePreset(editingPreset.id, title, template, folderId);
     } else {
-      await createPreset(title, template);
+      await createPreset(title, template, folderId);
     }
     await reload();
   };
 
-  const handleDelete = async (preset: Preset) => {
+  const handleSaveFolder = async (name: string, presetIds: number[]) => {
+    const folderId = await createFolder(name);
+    await assignPresetsToFolder(presetIds, folderId);
+    await reload();
+  };
+
+  const handleDeletePreset = async (preset: Preset) => {
     await deletePreset(preset.id);
     await reload();
+  };
+
+  const handleDeleteFolder = async (deletePresets: boolean) => {
+    if (!folderToDelete) return;
+    await deleteFolder(folderToDelete.id, deletePresets);
+    await reload();
+  };
+
+  const toggleFolder = (id: number) => {
+    setCollapsedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  };
+
+  const renderPreset = (preset: Preset) => (
+    <PresetItem
+      key={preset.id}
+      preset={preset}
+      onSelect={setActivePreset}
+      onEdit={openEditModal}
+      onDelete={handleDeletePreset}
+    />
+  );
+
+  const renderGroupedList = () => {
+    const ungrouped = filtered.filter((p) => p.folder_id == null);
+
+    return (
+      <ul className="flex flex-col gap-1">
+        {folders.map((folder) => {
+          const inFolder = filtered.filter((p) => p.folder_id === folder.id);
+          return (
+            <FolderSection
+              key={folder.id}
+              folder={folder}
+              collapsed={collapsedIds.includes(folder.id)}
+              onToggle={() => toggleFolder(folder.id)}
+              onDelete={() => setFolderToDelete(folder)}
+            >
+              {inFolder.length === 0 ? (
+                <li className="px-3 py-1.5 text-xs text-neutral-400">Empty</li>
+              ) : (
+                inFolder.map(renderPreset)
+              )}
+            </FolderSection>
+          );
+        })}
+        {ungrouped.length > 0 && (
+          <li className="flex flex-col">
+            {folders.length > 0 && (
+              <p className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                No folder
+              </p>
+            )}
+            <ul className="flex flex-col gap-0.5">{ungrouped.map(renderPreset)}</ul>
+          </li>
+        )}
+      </ul>
+    );
   };
 
   return (
@@ -95,37 +181,52 @@ export default function MainScreen() {
                 <p className="py-6 text-center text-sm text-neutral-400">
                   Loading…
                 </p>
-              ) : filtered.length === 0 ? (
+              ) : isSearching && filtered.length === 0 ? (
                 <p className="py-6 text-center text-sm text-neutral-400">
-                  {query ? "No results found" : "No presets yet"}
+                  No results found
                 </p>
-              ) : (
+              ) : !isSearching &&
+                filtered.length === 0 &&
+                folders.length === 0 ? (
+                <p className="py-6 text-center text-sm text-neutral-400">
+                  No presets yet
+                </p>
+              ) : isSearching ? (
                 <ul className="flex flex-col gap-0.5">
                   <AnimatePresence initial={false}>
-                    {filtered.map((preset) => (
-                      <PresetItem
-                        key={preset.id}
-                        preset={preset}
-                        onSelect={setActivePreset}
-                        onEdit={openEditModal}
-                        onDelete={handleDelete}
-                      />
-                    ))}
+                    {filtered.map(renderPreset)}
                   </AnimatePresence>
                 </ul>
+              ) : (
+                renderGroupedList()
               )}
             </div>
 
-            <AddPresetButton onAdd={openCreateModal} />
+            <AddPresetButton
+              onAddFolder={() => setFolderModalOpen(true)}
+              onAddTemplate={openCreateModal}
+            />
           </motion.div>
         )}
       </AnimatePresence>
 
       <PresetFormModal
-        open={modalOpen}
+        open={presetModalOpen}
         preset={editingPreset}
-        onClose={closeModal}
-        onSave={handleSave}
+        folders={folders}
+        onClose={closePresetModal}
+        onSave={handleSavePreset}
+      />
+      <FolderFormModal
+        open={folderModalOpen}
+        presets={presets}
+        onClose={() => setFolderModalOpen(false)}
+        onSave={handleSaveFolder}
+      />
+      <DeleteFolderDialog
+        folder={folderToDelete}
+        onClose={() => setFolderToDelete(null)}
+        onConfirm={handleDeleteFolder}
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import type { Preset } from "@/lib/db";
+import type { Folder, Preset } from "@/lib/db";
 import { extractPlaceholders } from "@/lib/template";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -6,18 +6,25 @@ import { useEffect, useMemo, useRef, useState } from "react";
 interface PresetFormModalProps {
   open: boolean;
   preset: Preset | null;
+  folders: Folder[];
   onClose: () => void;
-  onSave: (title: string, template: string) => Promise<void>;
+  onSave: (
+    title: string,
+    template: string,
+    folderId: number | null,
+  ) => Promise<void>;
 }
 
 export default function PresetFormModal({
   open,
   preset,
+  folders,
   onClose,
   onSave,
 }: PresetFormModalProps) {
   const [title, setTitle] = useState("");
   const [template, setTemplate] = useState("");
+  const [folderId, setFolderId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -27,6 +34,7 @@ export default function PresetFormModal({
     if (open) {
       setTitle(preset?.title ?? "");
       setTemplate(preset?.template ?? "");
+      setFolderId(preset?.folder_id ?? null);
     }
   }, [open, preset]);
 
@@ -69,7 +77,7 @@ export default function PresetFormModal({
 
     setSaving(true);
     try {
-      await onSave(trimmedTitle, trimmedTemplate);
+      await onSave(trimmedTitle, trimmedTemplate, folderId);
       onClose();
     } finally {
       setSaving(false);
@@ -145,6 +153,28 @@ export default function PresetFormModal({
                   className="w-full resize-none select-text rounded-b-md rounded-t-none border-0 bg-black/[0.04] px-2.5 py-1.5 text-sm text-neutral-900 outline-none ring-0 focus:bg-black/[0.06]"
                 />
               </div>
+
+              <label className="block">
+                <span className="text-xs font-medium text-neutral-500">
+                  Folder
+                </span>
+                <select
+                  value={folderId ?? ""}
+                  onChange={(e) =>
+                    setFolderId(
+                      e.target.value === "" ? null : Number(e.target.value),
+                    )
+                  }
+                  className="mt-1 w-full rounded-md border-0 bg-black/[0.04] px-2.5 py-1.5 text-sm text-neutral-900 outline-none ring-0 focus:bg-black/[0.06]"
+                >
+                  <option value="">No folder</option>
+                  {folders.map((folder) => (
+                    <option key={folder.id} value={folder.id}>
+                      {folder.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
 
             <div className="flex shrink-0 justify-end gap-2 border-t border-black/10 px-3 py-2">
