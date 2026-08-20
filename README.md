@@ -7,10 +7,12 @@ Inspired by the Formix browser extension, but works system-wide — not just on 
 ## ✨ Features
 
 - ⚡️ **Global hotkey** — open the window from any application (default: `Ctrl+F2`)
-- 📍 **Smart positioning** — the window opens next to the mouse cursor
+- 📍 **Smart positioning** — the window opens next to the mouse cursor and always stays within the screen bounds, even if the cursor is at the very edge of the monitor
 - 📝 **Templates with fields** — create presets like `Hello, {{Name}}, how are you?`
 - 🔁 **Field reuse** — the same field can appear multiple times in a template
-- 🔍 **Quick search** — instant filtering of the preset list
+- ⌨️ **Key automation** — insert a key press or combination into a template (for example Enter or Ctrl+Enter) anywhere in the text; it will fire automatically at the right moment during paste
+- 📁 **Folders** — group presets into folders for easier organization
+- 🔍 **Quick search** — instant filtering of the preset list, including inside folders
 - 📋 **One-click paste** — text is copied to the clipboard and automatically pasted into the active application (`Ctrl+V`), works correctly regardless of the active keyboard layout
 - 👋 **Click-outside to close** — the window hides itself when you click outside it, like Spotlight/Raycast
 - 🎨 **Minimalist interface** — a compact window without clutter, so it doesn't distract you from work
@@ -22,7 +24,7 @@ Inspired by the Formix browser extension, but works system-wide — not just on 
 - React + TypeScript
 - Tailwind CSS
 - Framer Motion
-- SQLite (via `tauri-plugin-sql`) — local preset storage
+- SQLite (via `tauri-plugin-sql`) — local storage for presets and folders
 
 ## 🚀 Installation and Running
 
@@ -37,8 +39,8 @@ Inspired by the Formix browser extension, but works system-wide — not just on 
 
 ```bash
 # Clone the repository
-git clone https://github.com/<your-username>/formix-desktop.git
-cd formix-desktop
+git clone https://github.com/PhantomUnk/Formix-Desktop.git
+cd Formix-Desktop
 
 # Install dependencies
 npm install
@@ -59,7 +61,7 @@ The ready installer will appear in `src-tauri/target/release/bundle`.
 
 ### Ready-made build
 
-If you don't want to build it yourself — the latest `.exe` is available on the [Releases](../../releases) page.
+If you don't want to build it yourself — the latest `.exe` is available on the [Releases](https://github.com/PhantomUnk/Formix-Desktop/releases) page.
 
 > **Note:** the build is not signed with a certificate, so Windows SmartScreen may show a warning on first launch. This is expected for independent projects — click "More info" → "Run anyway".
 
