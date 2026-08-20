@@ -1,5 +1,7 @@
+import HotkeyInput from "@/components/HotkeyInput";
 import type { Folder, Preset } from "@/lib/db";
 import { extractPlaceholders } from "@/lib/template";
+import { Keyboard } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -25,8 +27,10 @@ export default function PresetFormModal({
   const [title, setTitle] = useState("");
   const [template, setTemplate] = useState("");
   const [folderId, setFolderId] = useState<number | null>(null);
+  const [hotkeyOpen, setHotkeyOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const hotkeyWrapRef = useRef<HTMLDivElement>(null);
 
   const placeholders = useMemo(() => extractPlaceholders(template), [template]);
 
@@ -35,12 +39,26 @@ export default function PresetFormModal({
       setTitle(preset?.title ?? "");
       setTemplate(preset?.template ?? "");
       setFolderId(preset?.folder_id ?? null);
+      setHotkeyOpen(false);
     }
   }, [open, preset]);
 
-  const insertAtCursor = (name: string) => {
+  useEffect(() => {
+    if (!hotkeyOpen) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (
+        hotkeyWrapRef.current &&
+        !hotkeyWrapRef.current.contains(e.target as Node)
+      ) {
+        setHotkeyOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [hotkeyOpen]);
+
+  const insertAtCursor = (insertion: string) => {
     const el = textareaRef.current;
-    const insertion = `{{${name}}}`;
     const start = el?.selectionStart ?? template.length;
     const end = el?.selectionEnd ?? template.length;
     const nextTemplate =
@@ -56,7 +74,6 @@ export default function PresetFormModal({
   };
 
   const handleAddTextField = () => {
-    // + Text Field button click handler
     let maxNumber = 0;
 
     for (const name of placeholders) {
@@ -66,7 +83,13 @@ export default function PresetFormModal({
       }
     }
 
-    insertAtCursor(`Text Field ${maxNumber + 1}`);
+    insertAtCursor(`{{Text Field ${maxNumber + 1}}}`);
+  };
+
+  const handleHotkeyChange = (combo: string | null) => {
+    if (!combo) return;
+    insertAtCursor(`{{KEY:${combo}}}`);
+    setHotkeyOpen(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -126,24 +149,45 @@ export default function PresetFormModal({
                 <span className="text-xs font-medium text-neutral-500">
                   Template
                 </span>
-                <div className="mt-1 flex flex-wrap items-center gap-1.5 rounded-t-md border-b border-black/[0.06] bg-black/[0.03] px-2 py-1.5">
-                  <button
-                    type="button"
-                    onClick={handleAddTextField}
-                    className="rounded-md bg-black/[0.06] px-2 py-0.5 text-xs font-medium text-neutral-700 transition-colors hover:bg-black/[0.1]"
-                  >
-                    + Text Field
-                  </button>
-                  {placeholders.map((name) => (
+                <div
+                  ref={hotkeyWrapRef}
+                  className="mt-1 rounded-t-md border-b border-black/[0.06] bg-black/[0.03]"
+                >
+                  <div className="flex flex-wrap items-center gap-1.5 px-2 py-1.5">
                     <button
-                      key={name}
                       type="button"
-                      onClick={() => insertAtCursor(name)}
-                      className="rounded-full bg-black/[0.06] px-2 py-0.5 text-xs text-neutral-600 transition-colors hover:bg-black/[0.1] hover:text-neutral-900"
+                      onClick={handleAddTextField}
+                      className="rounded-md bg-black/[0.06] px-2 py-0.5 text-xs font-medium text-neutral-700 transition-colors hover:bg-black/[0.1]"
                     >
-                      {name}
+                      + Text Field
                     </button>
-                  ))}
+                    <button
+                      type="button"
+                      onClick={() => setHotkeyOpen((wasOpen) => !wasOpen)}
+                      className="flex items-center gap-1 rounded-md bg-black/[0.06] px-2 py-0.5 text-xs font-medium text-neutral-700 transition-colors hover:bg-black/[0.1]"
+                    >
+                      <Keyboard className="h-3 w-3" strokeWidth={2} />
+                      + Key After Paste
+                    </button>
+                    {placeholders.map((name) => (
+                      <button
+                        key={name}
+                        type="button"
+                        onClick={() => insertAtCursor(`{{${name}}}`)}
+                        className="rounded-full bg-black/[0.06] px-2 py-0.5 text-xs text-neutral-600 transition-colors hover:bg-black/[0.1] hover:text-neutral-900"
+                      >
+                        {name}
+                      </button>
+                    ))}
+                  </div>
+                  {hotkeyOpen && (
+                    <div className="border-t border-black/[0.06] px-2 py-1.5">
+                      <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-neutral-400">
+                        After paste
+                      </p>
+                      <HotkeyInput value={null} onChange={handleHotkeyChange} />
+                    </div>
+                  )}
                 </div>
                 <textarea
                   ref={textareaRef}

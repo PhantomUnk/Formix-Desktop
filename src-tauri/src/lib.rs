@@ -36,7 +36,8 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             utils::get_window_position,
-            utils::simulate_paste
+            utils::simulate_paste,
+            utils::send_key_combo
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

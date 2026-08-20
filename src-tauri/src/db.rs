@@ -25,11 +25,17 @@ pub fn get_migrations() -> Vec<Migration> {
             );",
             kind: MigrationKind::Up,
         },
-        // Отдельная версия: sqlx/SQLite обычно выполняет только первый statement в одном sql.
+        // Separate version: sqlx/SQLite usually runs only the first statement in one sql string.
         Migration {
             version: 3,
             description: "add_preset_folder_id",
             sql: "ALTER TABLE presets ADD COLUMN folder_id INTEGER REFERENCES folders(id) ON DELETE SET NULL;",
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 4,
+            description: "add_preset_after_paste_action",
+            sql: "ALTER TABLE presets ADD COLUMN after_paste_action TEXT;",
             kind: MigrationKind::Up,
         },
     ]

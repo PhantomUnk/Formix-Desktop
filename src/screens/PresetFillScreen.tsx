@@ -1,6 +1,14 @@
 import type { Preset } from "@/lib/db";
-import { pasteIntoFocusedApp } from "@/lib/paste";
-import { extractPlaceholders, fillTemplate, parseTemplateSegments } from "@/lib/template";
+import { delay } from "@/lib/paste";
+import {
+  extractPlaceholders,
+  fillTemplate,
+  parseTemplateSegments,
+  splitFilledTemplate,
+} from "@/lib/template";
+import { invoke } from "@tauri-apps/api/core";
+import { getCurrentWindow } from "@tauri-apps/api/window";
+import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { ArrowLeft } from "lucide-react";
 import { motion } from "motion/react";
 import { useMemo, useState } from "react";
@@ -38,8 +46,24 @@ export default function PresetFillScreen({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const finalText = fillTemplate(preset.template, values);
-    await pasteIntoFocusedApp(finalText, onBack);
+    const filledText = fillTemplate(preset.template, values);
+    const chunks = splitFilledTemplate(filledText);
+
+    await getCurrentWindow().hide();
+    onBack();
+
+    for (const chunk of chunks) {
+      if (chunk.text) {
+        await writeText(chunk.text);
+        await delay();
+        await invoke("simulate_paste");
+        await delay();
+      }
+      if (chunk.keyAfter) {
+        await invoke("send_key_combo", { combo: chunk.keyAfter });
+        await delay();
+      }
+    }
     resetValues();
   };
 

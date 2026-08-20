@@ -36,7 +36,7 @@ async function hideWindow() {
 async function showWindow() {
   markShowGracePeriod();
   const appWindow = getCurrentWindow();
-  const size = await appWindow.innerSize(); // физический размер окна
+  const size = await appWindow.innerSize(); // physical window size
   const scale = await appWindow.scaleFactor();
 
   const [x, y] = await invoke<[number, number]>("get_window_position", {

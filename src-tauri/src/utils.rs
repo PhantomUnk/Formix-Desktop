@@ -58,18 +58,140 @@ pub fn get_window_position(
     (x, y)
 }
 
-use enigo::{Enigo, Keyboard, Settings, Key, Direction};
+use enigo::{Direction, Enigo, Key, Keyboard, Settings};
 
 #[tauri::command]
 pub fn simulate_paste() -> Result<(), String> {
     let mut enigo = Enigo::new(&Settings::default()).map_err(|e| e.to_string())?;
 
-    // #[cfg(target_os = "windows")]
-    // let v_key = Key::Raw(0x56); - virtual key code for 'V' on Windows
-
-    enigo.key(Key::Control, Direction::Press).map_err(|e| e.to_string())?;
-    enigo.key(Key::V, Direction::Click).map_err(|e| e.to_string())?;
-    enigo.key(Key::Control, Direction::Release).map_err(|e| e.to_string())?;
+    enigo
+        .key(Key::Control, Direction::Press)
+        .map_err(|e| e.to_string())?;
+    enigo
+        .key(Key::V, Direction::Click)
+        .map_err(|e| e.to_string())?;
+    enigo
+        .key(Key::Control, Direction::Release)
+        .map_err(|e| e.to_string())?;
 
     Ok(())
+}
+
+#[tauri::command]
+pub fn send_key_combo(combo: String) -> Result<(), String> {
+    let mut enigo = Enigo::new(&Settings::default()).map_err(|e| e.to_string())?;
+    send_hotkey(&mut enigo, &combo)
+}
+
+fn send_hotkey(enigo: &mut Enigo, combo: &str) -> Result<(), String> {
+    let mut modifiers = Vec::new();
+    let mut main_key = None;
+
+    for part in combo.split('+') {
+        let part = part.trim().to_ascii_lowercase();
+        if part.is_empty() {
+            continue;
+        }
+        match part.as_str() {
+            "ctrl" | "control" => modifiers.push(Key::Control),
+            "alt" => modifiers.push(Key::Alt),
+            "shift" => modifiers.push(Key::Shift),
+            other => main_key = Some(parse_main_key(other)?),
+        }
+    }
+
+    let main_key = main_key.ok_or_else(|| "hotkey has no main key".to_string())?;
+
+    for key in &modifiers {
+        enigo.key(*key, Direction::Press).map_err(|e| e.to_string())?;
+    }
+    enigo
+        .key(main_key, Direction::Click)
+        .map_err(|e| e.to_string())?;
+    for key in modifiers.iter().rev() {
+        enigo.key(*key, Direction::Release).map_err(|e| e.to_string())?;
+    }
+
+    Ok(())
+}
+
+fn parse_main_key(name: &str) -> Result<Key, String> {
+    match name {
+        "enter" | "return" => Ok(Key::Return),
+        "tab" => Ok(Key::Tab),
+        "escape" | "esc" => Ok(Key::Escape),
+        "backspace" => Ok(Key::Backspace),
+        "space" => Ok(Key::Space),
+        "f1" => Ok(Key::F1),
+        "f2" => Ok(Key::F2),
+        "f3" => Ok(Key::F3),
+        "f4" => Ok(Key::F4),
+        "f5" => Ok(Key::F5),
+        "f6" => Ok(Key::F6),
+        "f7" => Ok(Key::F7),
+        "f8" => Ok(Key::F8),
+        "f9" => Ok(Key::F9),
+        "f10" => Ok(Key::F10),
+        "f11" => Ok(Key::F11),
+        "f12" => Ok(Key::F12),
+        s if s.len() == 1 => parse_char_key(s.chars().next().unwrap()),
+        _ => Err(format!("unsupported key: {name}")),
+    }
+}
+
+// Use virtual keys (Key::S), not Unicode. Unicode types a character and
+// shortcuts like Ctrl+S would not fire.
+fn parse_char_key(c: char) -> Result<Key, String> {
+    #[cfg(target_os = "windows")]
+    {
+        let key = match c {
+            'a' => Key::A,
+            'b' => Key::B,
+            'c' => Key::C,
+            'd' => Key::D,
+            'e' => Key::E,
+            'f' => Key::F,
+            'g' => Key::G,
+            'h' => Key::H,
+            'i' => Key::I,
+            'j' => Key::J,
+            'k' => Key::K,
+            'l' => Key::L,
+            'm' => Key::M,
+            'n' => Key::N,
+            'o' => Key::O,
+            'p' => Key::P,
+            'q' => Key::Q,
+            'r' => Key::R,
+            's' => Key::S,
+            't' => Key::T,
+            'u' => Key::U,
+            'v' => Key::V,
+            'w' => Key::W,
+            'x' => Key::X,
+            'y' => Key::Y,
+            'z' => Key::Z,
+            '0' => Key::Num0,
+            '1' => Key::Num1,
+            '2' => Key::Num2,
+            '3' => Key::Num3,
+            '4' => Key::Num4,
+            '5' => Key::Num5,
+            '6' => Key::Num6,
+            '7' => Key::Num7,
+            '8' => Key::Num8,
+            '9' => Key::Num9,
+            _ => return Err(format!("unsupported key: {c}")),
+        };
+        return Ok(key);
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        if c.is_ascii_alphanumeric() {
+            Ok(Key::Unicode(c))
+        } else {
+            Err(format!("unsupported key: {c}"))
+        }
+    }
 }

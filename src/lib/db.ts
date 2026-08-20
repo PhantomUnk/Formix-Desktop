@@ -85,7 +85,7 @@ export async function deleteFolder(
   if (deletePresets) {
     await db.execute("DELETE FROM presets WHERE folder_id = $1", [id]);
   } else {
-    // На случай если FK в SQLite не сработал — снимаем связь явно.
+    // If the SQLite FK did not fire, unlink presets explicitly.
     await db.execute("UPDATE presets SET folder_id = NULL WHERE folder_id = $1", [
       id,
     ]);

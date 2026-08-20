@@ -4,18 +4,30 @@ export type TemplateSegment =
   | { type: "text"; value: string }
   | { type: "placeholder"; name: string };
 
+export type FilledChunk = {
+  text: string;
+  keyAfter: string | null;
+};
+
+function isKeyToken(name: string): boolean {
+  return name.startsWith("KEY:");
+}
+
+function keyComboFromToken(name: string): string {
+  return name.slice("KEY:".length).trim();
+}
+
 /**
  * Field names from `{{...}}`. Set removes duplicates: the same field may
  * appear in the template multiple times, but it is a single field in the form.
+ * `{{KEY:...}}` tokens are keys to press, not form fields.
  */
 export function extractPlaceholders(template: string): string[] {
-  // Find all placeholders and extract the text inside {{...}}.
   const matches = template.matchAll(createPlaceholderRegex());
+  const names = [...matches]
+    .map((match) => match[1].trim())
+    .filter((name) => !isKeyToken(name));
 
-  // Remove surrounding whitespace from each field name.
-  const names = [...matches].map((match) => match[1].trim());
-
-  // Remove duplicates because repeated placeholders share one form field.
   return [...new Set(names)];
 }
 
@@ -23,12 +35,40 @@ export function fillTemplate(
   template: string,
   values: Record<string, string>,
 ): string {
-  // Replace every placeholder with its corresponding value.
-  // Missing values are replaced with an empty string.
-  return template.replace(
-    createPlaceholderRegex(),
-    (_, key: string) => values[key.trim()] ?? "",
-  );
+  // Leave {{KEY:...}} in place so splitFilledTemplate can find them later.
+  return template.replace(createPlaceholderRegex(), (full, key: string) => {
+    const name = key.trim();
+    if (isKeyToken(name)) return full;
+    return values[name] ?? "";
+  });
+}
+
+/** Split filled text on {{KEY:...}} tokens into paste chunks. */
+export function splitFilledTemplate(filledText: string): FilledChunk[] {
+  const chunks: FilledChunk[] = [];
+  const regex = createPlaceholderRegex();
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(filledText)) !== null) {
+    const name = match[1].trim();
+    if (!isKeyToken(name)) continue;
+
+    chunks.push({
+      text: filledText.slice(lastIndex, match.index),
+      keyAfter: keyComboFromToken(name) || null,
+    });
+    lastIndex = regex.lastIndex;
+  }
+
+  if (lastIndex < filledText.length || chunks.length === 0) {
+    chunks.push({
+      text: filledText.slice(lastIndex),
+      keyAfter: null,
+    });
+  }
+
+  return chunks;
 }
 
 /**
@@ -50,8 +90,13 @@ export function parseTemplateSegments(template: string): TemplateSegment[] {
       });
     }
 
-    // Store the placeholder name without surrounding whitespace.
-    segments.push({ type: "placeholder", name: match[1].trim() });
+    const name = match[1].trim();
+    if (isKeyToken(name)) {
+      // Keep the key token as visible text, not as a form field.
+      segments.push({ type: "text", value: match[0] });
+    } else {
+      segments.push({ type: "placeholder", name });
+    }
     lastIndex = regex.lastIndex;
   }
 
