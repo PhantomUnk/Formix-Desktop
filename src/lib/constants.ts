@@ -8,7 +8,9 @@ export const PASTE_DELAY_MS = 150;
 
 export const WINDOW_FADE_MS = 150;
 
-export const DEFAULT_HOTKEY = "CommandOrControl+F2";
+export const DEFAULT_HOTKEY = "ctrl+f2";
+export const DEFAULT_THEME = "light";
+export const DEFAULT_LANGUAGE = "en";
 
 export const PLACEHOLDER_REGEX_SOURCE = String.raw`\{\{([^{}]+)\}\}`;
 

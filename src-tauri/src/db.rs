@@ -38,5 +38,14 @@ pub fn get_migrations() -> Vec<Migration> {
             sql: "ALTER TABLE presets ADD COLUMN after_paste_action TEXT;",
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 5,
+            description: "create_settings_table",
+            sql: "CREATE TABLE settings (
+                key TEXT PRIMARY KEY,
+                value TEXT
+            );",
+            kind: MigrationKind::Up,
+        },
     ]
 }

@@ -1,4 +1,4 @@
-import { WINDOW_FADE_MS } from "@/constants";
+import { WINDOW_FADE_MS } from "@/lib/constants";
 
 export function fadeOut(el: HTMLElement | null) {
   if (!el) return Promise.resolve();

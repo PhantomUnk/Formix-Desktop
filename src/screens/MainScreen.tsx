@@ -5,6 +5,7 @@ import FolderSection from "@/components/FolderSection";
 import PresetFormModal from "@/components/PresetFormModal";
 import PresetItem from "@/components/PresetItem";
 import PresetSearch from "@/components/PresetSearch";
+import SettingsModal from "@/components/SettingsModal";
 import {
   assignPresetsToFolder,
   createFolder,
@@ -20,14 +21,17 @@ import {
 import PresetFillScreen from "@/screens/PresetFillScreen";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export default function MainScreen() {
+  const { t } = useTranslation();
   const [presets, setPresets] = useState<Preset[]>([]);
   const [folders, setFolders] = useState<Folder[]>([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [presetModalOpen, setPresetModalOpen] = useState(false);
   const [folderModalOpen, setFolderModalOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [editingPreset, setEditingPreset] = useState<Preset | null>(null);
   const [folderToDelete, setFolderToDelete] = useState<Folder | null>(null);
   const [collapsedIds, setCollapsedIds] = useState<number[]>([]);
@@ -135,7 +139,9 @@ export default function MainScreen() {
               onDelete={() => setFolderToDelete(folder)}
             >
               {inFolder.length === 0 ? (
-                <li className="px-3 py-1.5 text-xs text-neutral-400">Empty</li>
+                <li className="px-3 py-1.5 text-xs text-neutral-400 dark:text-neutral-500">
+                  {t("main.emptyFolder")}
+                </li>
               ) : (
                 inFolder.map(renderPreset)
               )}
@@ -145,8 +151,8 @@ export default function MainScreen() {
         {ungrouped.length > 0 && (
           <li className="flex flex-col">
             {folders.length > 0 && (
-              <p className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-neutral-500">
-                No folder
+                <p className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+                {t("main.noFolder")}
               </p>
             )}
             <ul className="flex flex-col gap-0.5">{ungrouped.map(renderPreset)}</ul>
@@ -174,22 +180,26 @@ export default function MainScreen() {
             exit={{ opacity: 0, x: 12 }}
             transition={{ duration: 0.15 }}
           >
-            <PresetSearch value={query} onChange={setQuery} />
+            <PresetSearch
+              value={query}
+              onChange={setQuery}
+              onOpenSettings={() => setSettingsOpen(true)}
+            />
 
             <div className="min-h-0 flex-1 overflow-y-auto p-2 pb-10">
               {loading ? (
-                <p className="py-6 text-center text-sm text-neutral-400">
-                  Loading…
+                <p className="py-6 text-center text-sm text-neutral-400 dark:text-neutral-500">
+                  {t("main.loading")}
                 </p>
               ) : isSearching && filtered.length === 0 ? (
-                <p className="py-6 text-center text-sm text-neutral-400">
-                  No results found
+                <p className="py-6 text-center text-sm text-neutral-400 dark:text-neutral-500">
+                  {t("main.noResults")}
                 </p>
               ) : !isSearching &&
                 filtered.length === 0 &&
                 folders.length === 0 ? (
-                <p className="py-6 text-center text-sm text-neutral-400">
-                  No presets yet
+                <p className="py-6 text-center text-sm text-neutral-400 dark:text-neutral-500">
+                  {t("main.noPresets")}
                 </p>
               ) : isSearching ? (
                 <ul className="flex flex-col gap-0.5">
@@ -227,6 +237,11 @@ export default function MainScreen() {
         folder={folderToDelete}
         onClose={() => setFolderToDelete(null)}
         onConfirm={handleDeleteFolder}
+      />
+      <SettingsModal
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        onImported={() => void reload()}
       />
     </div>
   );

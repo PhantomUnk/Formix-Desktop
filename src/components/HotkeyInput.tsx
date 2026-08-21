@@ -1,6 +1,7 @@
 import { eventToHotkey, formatHotkeyLabel } from "@/lib/hotkey";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface HotkeyInputProps {
   value: string | null;
@@ -8,6 +9,7 @@ interface HotkeyInputProps {
 }
 
 export default function HotkeyInput({ value, onChange }: HotkeyInputProps) {
+  const { t } = useTranslation();
   const [recording, setRecording] = useState(false);
 
   useEffect(() => {
@@ -27,10 +29,10 @@ export default function HotkeyInput({ value, onChange }: HotkeyInputProps) {
   }, [recording, onChange]);
 
   const label = recording
-    ? "Press a key…"
+    ? t("hotkey.pressKey")
     : value
       ? formatHotkeyLabel(value)
-      : "Click to record";
+      : t("hotkey.clickToRecord");
 
   return (
     <div className="flex items-center gap-1">
@@ -39,8 +41,8 @@ export default function HotkeyInput({ value, onChange }: HotkeyInputProps) {
         onClick={() => setRecording(true)}
         className={`min-w-0 flex-1 rounded-md px-2.5 py-1.5 text-left text-xs outline-none ring-0 ${
           recording
-            ? "bg-black/[0.08] text-neutral-900"
-            : "bg-black/[0.04] text-neutral-700 hover:bg-black/[0.06]"
+            ? "bg-black/[0.08] text-neutral-900 dark:bg-white/[0.12] dark:text-neutral-100"
+            : "bg-black/[0.04] text-neutral-700 hover:bg-black/[0.06] dark:bg-white/[0.06] dark:text-neutral-200 dark:hover:bg-white/[0.1]"
         }`}
       >
         {label}
@@ -52,8 +54,8 @@ export default function HotkeyInput({ value, onChange }: HotkeyInputProps) {
             onChange(null);
             setRecording(false);
           }}
-          aria-label="Clear hotkey"
-          className="rounded-md p-1 text-neutral-500 transition-colors hover:bg-black/[0.06] hover:text-neutral-800"
+          aria-label={t("hotkey.clearAria")}
+          className="rounded-md p-1 text-neutral-500 transition-colors hover:bg-black/[0.06] hover:text-neutral-800 dark:hover:bg-white/[0.08] dark:hover:text-neutral-200"
         >
           <X className="h-3.5 w-3.5" strokeWidth={2} />
         </button>

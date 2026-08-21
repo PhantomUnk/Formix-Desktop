@@ -1,4 +1,4 @@
-import { createPlaceholderRegex } from "@/constants";
+import { createPlaceholderRegex } from "@/lib/constants";
 
 export type TemplateSegment =
   | { type: "text"; value: string }

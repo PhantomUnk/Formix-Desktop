@@ -1,5 +1,7 @@
+import { PASTE_DELAY_MS } from "@/lib/constants";
 import type { Preset } from "@/lib/db";
 import { delay } from "@/lib/paste";
+import { getSetting } from "@/lib/settings";
 import {
   extractPlaceholders,
   fillTemplate,
@@ -12,6 +14,7 @@ import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { ArrowLeft } from "lucide-react";
 import { motion } from "motion/react";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface PresetFillScreenProps {
   preset: Preset;
@@ -22,6 +25,7 @@ export default function PresetFillScreen({
   preset,
   onBack,
 }: PresetFillScreenProps) {
+  const { t } = useTranslation();
   const placeholders = useMemo(
     () => extractPlaceholders(preset.template),
     [preset.template],
@@ -38,7 +42,7 @@ export default function PresetFillScreen({
 
   const handleChange = (name: string, value: string) => {
     setValues((prev) => ({ ...prev, [name]: value }));
-  }; 
+  };
 
   const resetValues = () => {
     setValues(Object.fromEntries(placeholders.map((name) => [name, ""])));
@@ -52,22 +56,29 @@ export default function PresetFillScreen({
     await getCurrentWindow().hide();
     onBack();
 
+    const parsedDelay = Number(
+      await getSetting("pasteDelayMs", String(PASTE_DELAY_MS)),
+    );
+    const delayMs = Number.isFinite(parsedDelay) ? parsedDelay : PASTE_DELAY_MS;
+
     for (const chunk of chunks) {
       if (chunk.text) {
         await writeText(chunk.text);
-        await delay();
+        await delay(delayMs);
         await invoke("simulate_paste");
-        await delay();
+        await delay(delayMs);
       }
       if (chunk.keyAfter) {
         await invoke("send_key_combo", { combo: chunk.keyAfter });
-        await delay();
+        await delay(delayMs);
       }
     }
     resetValues();
   };
 
-  const firstPlaceholderIndex = segments.findIndex((s) => s.type === "placeholder");
+  const firstPlaceholderIndex = segments.findIndex(
+    (s) => s.type === "placeholder",
+  );
 
   return (
     <motion.div
@@ -81,22 +92,22 @@ export default function PresetFillScreen({
         onSubmit={handleSubmit}
         className="flex min-h-0 flex-1 flex-col overflow-hidden"
       >
-        <div className="flex shrink-0 items-center gap-2 border-b border-black/10 px-2 py-2.5">
+        <div className="flex shrink-0 items-center gap-2 border-b border-black/10 px-2 py-2.5 dark:border-white/10">
           <button
             type="button"
             onClick={onBack}
-            aria-label="Back to presets"
-            className="rounded-md p-1.5 text-neutral-600 transition-colors hover:bg-black/[0.06] hover:text-neutral-900"
+            aria-label={t("preset.backAria")}
+            className="rounded-md p-1.5 text-neutral-600 transition-colors hover:bg-black/[0.06] hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-white/[0.08] dark:hover:text-neutral-100"
           >
             <ArrowLeft className="h-4 w-4" strokeWidth={2} />
           </button>
-          <h2 className="min-w-0 flex-1 truncate text-[15px] font-semibold text-neutral-900">
+          <h2 className="min-w-0 flex-1 truncate text-[15px] font-semibold text-neutral-900 dark:text-neutral-100">
             {preset.title}
           </h2>
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto p-3">
-          <div className="flex min-h-[3.5rem] flex-wrap items-baseline gap-x-0.5 gap-y-1 rounded-md bg-black/[0.04] px-2.5 py-2 text-sm leading-relaxed text-neutral-900">
+          <div className="flex min-h-[3.5rem] flex-wrap items-baseline gap-x-0.5 gap-y-1 rounded-md bg-black/[0.04] px-2.5 py-2 text-sm leading-relaxed text-neutral-900 dark:bg-white/[0.06] dark:text-neutral-100">
             {segments.length > 0 ? (
               segments.map((segment, index) =>
                 segment.type === "text" ? (
@@ -115,7 +126,7 @@ export default function PresetFillScreen({
                       (values[segment.name] ?? "").length || 1,
                     )}
                     autoFocus={index === firstPlaceholderIndex}
-                    className="inline-block min-w-[2ch] select-text border-0 border-b border-neutral-400/60 bg-black/[0.06] px-1 py-0 text-sm text-neutral-900 outline-none ring-0 placeholder:text-neutral-400/70 focus:border-neutral-600 focus:bg-black/[0.08]"
+                    className="inline-block min-w-[2ch] select-text border-0 border-b border-neutral-400/60 bg-black/[0.06] px-1 py-0 text-sm text-neutral-900 outline-none ring-0 placeholder:text-neutral-400/70 focus:border-neutral-600 focus:bg-black/[0.08] dark:border-neutral-500 dark:bg-white/[0.08] dark:text-neutral-100 dark:focus:border-neutral-300 dark:focus:bg-white/[0.12]"
                   />
                 ),
               )
@@ -127,10 +138,10 @@ export default function PresetFillScreen({
           <div className="mt-3 flex justify-end">
             <button
               type="submit"
-              aria-label="Paste"
-              className="rounded-md bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-90"
+              aria-label={t("preset.paste")}
+              className="rounded-md bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-90 dark:bg-neutral-100 dark:text-neutral-900"
             >
-              Paste
+              {t("preset.paste")}
             </button>
           </div>
         </div>

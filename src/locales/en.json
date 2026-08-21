@@ -1,0 +1,70 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving…",
+    "add": "Add",
+    "ms": "ms"
+  },
+  "add": {
+    "folder": "Folder",
+    "template": "Template"
+  },
+  "search": {
+    "placeholder": "Search presets…"
+  },
+  "main": {
+    "loading": "Loading…",
+    "noResults": "No results found",
+    "noPresets": "No presets yet",
+    "emptyFolder": "Empty",
+    "noFolder": "No folder"
+  },
+  "preset": {
+    "edit": "Edit Preset",
+    "new": "New Preset",
+    "title": "Title",
+    "template": "Template",
+    "folder": "Folder",
+    "addTextField": "+ Text Field",
+    "addKeyAfterPaste": "+ Key After Paste",
+    "afterPaste": "After paste",
+    "editAria": "Edit preset",
+    "deleteAria": "Delete preset",
+    "paste": "Paste",
+    "backAria": "Back to presets"
+  },
+  "folder": {
+    "new": "New Folder",
+    "name": "Folder name",
+    "addPresets": "Add presets",
+    "deleteAria": "Delete folder {{name}}",
+    "deleteTitle": "Delete “{{name}}”?",
+    "deleteHint": "Choose what happens to presets in this folder. The folder itself will be deleted either way.",
+    "deleteWithPresets": "Delete presets with folder",
+    "keepPresets": "Keep presets (no folder)"
+  },
+  "hotkey": {
+    "pressKey": "Press a key…",
+    "clickToRecord": "Click to record",
+    "clearAria": "Clear hotkey"
+  },
+  "settings": {
+    "title": "Settings",
+    "hotkey": "Hotkey",
+    "theme": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "pasteDelay": "Paste delay",
+    "launchOnStartup": "Launch on system startup",
+    "language": "Language",
+    "english": "English",
+    "russian": "Русский",
+    "data": "Data",
+    "export": "Export",
+    "import": "Import"
+  },
+  "tray": {
+    "quit": "Quit"
+  }
+}

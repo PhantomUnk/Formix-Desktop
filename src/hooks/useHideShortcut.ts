@@ -1,17 +1,15 @@
-import {
-  DEFAULT_HOTKEY,
-  FOCUS_GRACE_MS,
-  WINDOW_X_OFFSET,
-  WINDOW_Y_OFFSET,
-} from "@/constants";
+import { DEFAULT_HOTKEY, FOCUS_GRACE_MS } from "@/lib/constants";
+import { toGlobalShortcut } from "@/lib/hotkey";
+import { getSetting } from "@/lib/settings";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow, PhysicalPosition } from "@tauri-apps/api/window";
+import { register, unregister } from "@tauri-apps/plugin-global-shortcut";
 import { useEffect } from "react";
-import useGlobalShortcut from "./useGlobalShortcut";
 import { fadeIn, fadeOut } from "./windowFade";
 
 let showGraceUntil = 0;
 let isHiding = false;
+let currentHotkey = "";
 
 function markShowGracePeriod() {
   showGraceUntil = Date.now() + FOCUS_GRACE_MS;
@@ -49,55 +47,76 @@ async function showWindow() {
   fadeIn(document.getElementById("root"));
 }
 
-export default function useHideShortcut(shortcut = DEFAULT_HOTKEY) {
-  useGlobalShortcut(shortcut, async () => {
-    const appWindow = getCurrentWindow();
-    const visible = await appWindow.isVisible();
-    if (visible) {
-      await hideWindow();
-    } else {
-      await showWindow();
-    }
-  });
+async function toggleWindow() {
+  const appWindow = getCurrentWindow();
+  const visible = await appWindow.isVisible();
+  if (visible) {
+    await hideWindow();
+  } else {
+    await showWindow();
+  }
+}
 
-  // Set up event listener for window focus changes to auto-hide the window
+/** Unregister the current global shortcut, then register `nextHotkey`. */
+export async function replaceAppHotkey(nextHotkey: string) {
+  if (currentHotkey) {
+    try {
+      await unregister(toGlobalShortcut(currentHotkey));
+    } catch (error) {
+      console.error("Failed to unregister shortcut:", error);
+    }
+    currentHotkey = "";
+  }
+
+  try {
+    await register(toGlobalShortcut(nextHotkey), (event: { state: string }) => {
+      if (event.state === "Pressed") void toggleWindow();
+    });
+    currentHotkey = nextHotkey;
+  } catch (error) {
+    console.error("Failed to register shortcut:", error);
+  }
+}
+
+export default function useHideShortcut() {
   useEffect(() => {
-    // Function to unsubscribe from the focus change event
-    let unlisten: (() => void) | undefined;
-    // Flag to handle race condition if component unmounts during async setup
     let cancelled = false;
+    let unlisten: (() => void) | undefined;
 
     const setup = async () => {
+      const saved = await getSetting("hotkey", DEFAULT_HOTKEY);
+      if (!cancelled) await replaceAppHotkey(saved);
+
       const appWindow = getCurrentWindow();
-      // Subscribe to focus change events
       const unlistenFn = await appWindow.onFocusChanged(
         ({ payload: focused }) => {
-          // If window gained focus, do nothing
           if (focused) return;
-          // If we just showed the window, skip auto-hide to prevent accidental closing
           if (isInShowGracePeriod()) return;
 
-          // Check if window is still visible, then hide it
           void appWindow.isVisible().then((visible) => {
             if (visible) void hideWindow();
           });
         },
       );
 
-      // Handle race condition: if component unmounted before setup finished
       if (cancelled) {
-        unlistenFn(); // Clean up immediately
+        unlistenFn();
       } else {
-        unlisten = unlistenFn; // Save the unsubscribe function for cleanup
+        unlisten = unlistenFn;
       }
     };
 
     void setup();
 
-    // Cleanup function when component unmounts
     return () => {
-      cancelled = true; // Mark setup as cancelled to prevent memory leak
-      unlisten?.(); // Unsubscribe from focus change event
+      cancelled = true;
+      unlisten?.();
+      if (currentHotkey) {
+        unregister(toGlobalShortcut(currentHotkey)).catch((error: Error) =>
+          console.error("Failed to unregister shortcut:", error),
+        );
+        currentHotkey = "";
+      }
     };
   }, []);
 }

@@ -2,7 +2,7 @@ import Database from "@tauri-apps/plugin-sql";
 
 let dbInstance: Database | null = null;
 
-async function getDb() {
+export async function getDb() {
   if (!dbInstance) {
     dbInstance = await Database.load("sqlite:presets.db");
   }

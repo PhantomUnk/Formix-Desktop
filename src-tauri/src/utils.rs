@@ -1,5 +1,5 @@
 use mouse_position::mouse_position::Mouse;
-use tauri::{WebviewWindow};
+use tauri::WebviewWindow;
 // #[tauri::command]
 // pub fn get_mouse_position() -> (i32, i32) {
 //     match Mouse::get_mouse_position() {
@@ -8,11 +8,7 @@ use tauri::{WebviewWindow};
 //     }
 // }
 #[tauri::command]
-pub fn get_window_position(
-    window: WebviewWindow,
-    win_width: f64,
-    win_height: f64,
-) -> (i32, i32) {
+pub fn get_window_position(window: WebviewWindow, win_width: f64, win_height: f64) -> (i32, i32) {
     // current cursor position (physical pixels)
     let (cursor_x, cursor_y) = match Mouse::get_mouse_position() {
         Mouse::Position { x, y } => (x, y),
@@ -103,13 +99,17 @@ fn send_hotkey(enigo: &mut Enigo, combo: &str) -> Result<(), String> {
     let main_key = main_key.ok_or_else(|| "hotkey has no main key".to_string())?;
 
     for key in &modifiers {
-        enigo.key(*key, Direction::Press).map_err(|e| e.to_string())?;
+        enigo
+            .key(*key, Direction::Press)
+            .map_err(|e| e.to_string())?;
     }
     enigo
         .key(main_key, Direction::Click)
         .map_err(|e| e.to_string())?;
     for key in modifiers.iter().rev() {
-        enigo.key(*key, Direction::Release).map_err(|e| e.to_string())?;
+        enigo
+            .key(*key, Direction::Release)
+            .map_err(|e| e.to_string())?;
     }
 
     Ok(())

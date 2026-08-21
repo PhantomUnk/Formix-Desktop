@@ -16,6 +16,20 @@
     "sql:allow-load",
     "sql:default",
     "sql:allow-execute",
-    "clipboard-manager:allow-write-text"
+    "clipboard-manager:allow-write-text",
+    "autostart:default",
+    "dialog:default",
+    {
+      "identifier": "fs:allow-create",
+      "allow": [{ "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-read-text-file",
+      "allow": [{ "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-write-text-file",
+      "allow": [{ "path": "**" }]
+    }
   ]
 }

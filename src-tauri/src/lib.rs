@@ -2,15 +2,31 @@
 mod db;
 mod utils;
 
+use std::sync::Mutex;
 use tauri::{
     menu::{Menu, MenuItem},
     tray::TrayIconBuilder,
+    Manager, State,
 };
+
+struct TrayQuitItem(Mutex<MenuItem<tauri::Wry>>);
+
+#[tauri::command]
+fn set_tray_quit_text(text: String, item: State<TrayQuitItem>) -> Result<(), String> {
+    item.0
+        .lock()
+        .map_err(|e| e.to_string())?
+        .set_text(text)
+        .map_err(|e| e.to_string())
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_autostart::Builder::new().build())
         .plugin(tauri_plugin_clipboard_manager::init())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
         .plugin(
             tauri_plugin_sql::Builder::default()
                 .add_migrations(db::DB_PATH, db::get_migrations())
@@ -19,8 +35,10 @@ pub fn run() {
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
-            let quit_item = MenuItem::with_id(app, "Quit", "Выход", true, None::<&str>)?;
+            let quit_item = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&quit_item])?;
+
+            app.manage(TrayQuitItem(Mutex::new(quit_item.clone())));
 
             TrayIconBuilder::new()
                 .icon(app.default_window_icon().unwrap().clone())
@@ -37,7 +55,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             utils::get_window_position,
             utils::simulate_paste,
-            utils::send_key_combo
+            utils::send_key_combo,
+            set_tray_quit_text
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
